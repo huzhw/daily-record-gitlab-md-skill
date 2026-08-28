@@ -3,6 +3,7 @@
 ## 相关技能
 
 - [daily-merge](https://github.com/huzhw/daily-merge-skill) — 日报第二步：读取当天 md，合并到当月累积 Excel 日报表
+> ⚠️ 两个 skill 是并列阶段（记录、合并），分开调用，不连着用。
 - [git-commit](https://github.com/huzhw/git-commit-skill) — Git 提交规范
 - [coding-rules](https://github.com/huzhw/coding-rules) — AI 编码协作规范
 - [reread-claude-md](https://github.com/huzhw/reread-claude-md-skill) — 重新加载 CLAUDE.md 规则
