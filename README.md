@@ -1,19 +1,18 @@
-# daily-record — 日报需求记录
+# daily-record-gitlab-md — 日报需求记录（GitLab → md）
 
 ## 相关技能
 
-- [daily-merge](https://github.com/huzhw/daily-merge-skill) — 日报第二步：读取当天 md，合并到当月累积 Excel 日报表
+- [daily-merge-gitlab-excel](https://github.com/huzhw/daily-merge-gitlab-excel-skill) — 日报第二步：读取当天 md，合并到当月累积 Excel 日报表
 > ⚠️ 两个 skill 是并列阶段（记录、合并），分开调用，不连着用。
 - [git-commit](https://github.com/huzhw/git-commit-skill) — Git 提交规范
-- [coding-rules](https://github.com/huzhw/coding-rules) — AI 编码协作规范
-- [reread-claude-md](https://github.com/huzhw/reread-claude-md-skill) — 重新加载 CLAUDE.md 规则
-- [token-3000](https://github.com/huzhw/token-3000-skill) — API 一键切换（公司免费 ↔ 自己花钱）
-- [service-manager](https://github.com/huzhw/service-manager) — 桌面服务管理工具
+- [reread-rules](https://github.com/huzhw/reread-rules-skill) — 重载 CLAUDE.md / AGENTS.md 规则
+- [claude-code-token-3000](https://github.com/huzhw/claude-code-token-3000-skill) — Claude Code API Token 切换
 - [code-check](https://github.com/huzhw/code-check-skill) — 增量代码隐患检查
+- [deepseek-harness-settings-curator](https://github.com/huzhw/deepseek-harness-settings-curator) — DSH 模型配置梳理
 
 ---
 
-日报流程第一步：从 git 提交记录中提取当天完成的需求，按五维度（设计调研、代码改动、测试验证、风险返工、沟通协作）逐项评估工时，写入 md 表格。
+日报流程第一步：从 GitLab 提交记录中提取当天完成的需求，按五维度（设计调研、代码改动、测试验证、风险返工、沟通协作）逐项评估工时，写入 md 表格。
 
 ## 核心能力
 
@@ -59,7 +58,7 @@
 ## 安装
 
 ```bash
-git clone https://github.com/huzhw/daily-record-skill.git ~/.claude/skills/daily-record
+git clone https://github.com/huzhw/daily-record-gitlab-md-skill.git ~/.claude/skills/daily-record-gitlab-md
 ```
 
 安装后在 AI 编码助手里说「补充日报」即可触发。

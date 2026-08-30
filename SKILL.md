@@ -1,20 +1,20 @@
 ---
-name: daily-record
-description: 日报第一步：总结当天需求完成情况，评估工时，写入 md 表格。触发词：补充日报、写日报、记录需求、日报总结、今天干了什么。
+name: daily-record-gitlab-md
+description: 日报第一步：从 GitLab 提交记录提取当天需求，评估工时，写入 md 表格。触发词：补充日报、写日报、记录需求、日报总结、今天干了什么。
 author: 胡志伟
 motto: "工时评估不是拍脑袋——设计、改动、测试、返工、沟通，五个维度逐一展开，少算一个就是对自己的不尊重。"
 ---
 
 # 日报 — 未补充需求
 
-## 🔴 与 daily-merge 是并列关系，不连着用
+## 🔴 与 daily-merge-gitlab-excel 是并列关系，不连着用
 
-**每日流程：先在各自项目跑 daily-record 把需求写进 md，最后再统一跑 daily-merge 合并 Excel。**
+**每日流程：先在各自项目跑 daily-record-gitlab-md 把需求写进 md，最后再统一跑 daily-merge-gitlab-excel 合并 Excel。**
 
-- `daily-record`（本 skill）：**只做第一步** —— 从当前 git 仓库提取当天提交，评估工时，写入 `日报需求记录-{日期}.md`。到 md 写入即结束，**不做 Excel 合并**。
-- `daily-merge`（另一独立 skill）：**只做第二步** —— 读取当天 md，把已完成需求合并进当月累积 Excel 日报表。由架构师单独说"合并日报"触发。
+- `daily-record-gitlab-md`（本 skill）：**只做第一步** —— 从当前 GitLab 仓库的提交记录提取当天需求，评估工时，写入 `日报需求记录-{日期}.md`。到 md 写入即结束，**不做 Excel 合并**。
+- `daily-merge-gitlab-excel`（另一独立 skill）：**只做第二步** —— 读取当天 md，把已完成需求合并进当月累积 Excel 日报表。由架构师单独说"合并日报"触发。
 
-**触发词互斥**：两个 skill 触发词不同，说"写日报/记录需求"只触发 daily-record，说"合并日报/生成表格"才触发 daily-merge，不会一个词同时带起两个。
+**触发词互斥**：两个 skill 触发词不同，说"写日报/记录需求"只触发 daily-record-gitlab-md，说"合并日报/生成表格"才触发 daily-merge-gitlab-excel，不会一个词同时带起两个。
 
 ---
 
