@@ -15,7 +15,7 @@
 
 ## 说明
 
-- 全局两个目录都是指向 F 仓库的 junction，两侧是**同一个目录**，不是副本。
+- 全局四个目录都是指向 F 仓库的 junction，与 F 仓库是**同一个目录**，不是副本。
 - 修改 F 仓库，全局立刻生效；在全局路径下改文件，F 仓库同步变化。
 - 日常维护只改 F 仓库（git 提交推送后全局自动一致），**不需要手动复制同步**。
 
@@ -43,4 +43,4 @@ rd "C:\Users\Administrator\.zcode\skills\daily-record-gitlab-md"
 
 ## 本 skill 特殊差异
 
-- 更名前全局原目录以 F 仓库为准（README 为 07-31 版）；备份位于 `F:\idea-workspase-skills\_skills_backup_20260802\daily-record`。
+- 更名前全局原目录以 F 仓库为准（README 为 07-31 版）。
