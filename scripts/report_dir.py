@@ -16,7 +16,7 @@ import os
 import sys
 from datetime import date, datetime
 
-DESKTOP = os.path.join(os.path.expanduser("~"), "Desktop")
+DESKTOP = r"F:\idea-workspase-skills\daily-report-panel"  # 日报根目录（2026-09-04 迁移自桌面，变量名沿用免改引用）
 
 
 def resolve_report_dir(day):

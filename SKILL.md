@@ -34,7 +34,7 @@ motto: "工时评估不是拍脑袋——设计、改动、测试、返工、沟
 ## 日报文件
 
 ```
-$HOME\Desktop\报告-{年份}年\日报-{年份}-{MM}月\日报需求记录-{YYYY}-{MM}-{DD}.md
+F:\idea-workspase-skills\daily-report-panel\报告-{年份}年\日报-{年份}-{MM}月\日报需求记录-{YYYY}-{MM}-{DD}.md
 ```
 
 **月份一律两位补零**（如 `08月`），与文件名 `{MM}` 及 daily-merge 脚本 `find_report_dir` 的规范一致。目录定位用脚本，**禁止手工推算月份数字**：
