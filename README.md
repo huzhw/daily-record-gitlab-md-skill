@@ -2,8 +2,7 @@
 
 ## 相关技能
 
-- [daily-merge-gitlab-excel](https://github.com/huzhw/daily-merge-gitlab-excel-skill) — 日报第二步：读取当天 md，合并到当月累积 Excel 日报表
-> ⚠️ 两个 skill 是并列阶段（记录、合并），分开调用，不连着用。
+> 本 skill 写完 md 即收工：合并到当月 Excel、导出、发邮件由日报管家（daily-report-panel）自动完成，无需手动合并步骤。
 - [git-commit](https://github.com/huzhw/git-commit-skill) — Git 提交规范
 - [reread-rules](https://github.com/huzhw/reread-rules-skill) — 重载 CLAUDE.md / AGENTS.md 规则
 - [claude-code-token-3000](https://github.com/huzhw/claude-code-token-3000-skill) — Claude Code API Token 切换
@@ -15,7 +14,7 @@
 
 ---
 
-日报流程第一步：从 GitLab 提交记录中提取当天完成的需求，按五维度（设计调研、代码改动、测试验证、风险返工、沟通协作）逐项评估工时，写入 md 表格。
+从 GitLab 提交记录中提取当天完成的需求，按五维度（设计调研、代码改动、测试验证、风险返工、沟通协作）逐项评估工时，写入 md 表格；写完即收工，合并与发件由日报管家（daily-report-panel）自动完成。
 
 ## 核心能力
 
