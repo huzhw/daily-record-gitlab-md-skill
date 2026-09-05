@@ -53,7 +53,7 @@
 
 - 状态：`100%`（已完成）、`50%`（进行中）、`0%`（未开始）
 - 仓库名自动映射为中文简称（如 `ai_data_infra` → 智能数据底座）
-- 需求概述末行溯源括号必带 **GitLab 网页链接 + 分支 + commit id**（如 `（2次提交 13:42~13:52 · 分支 master · GitLab：https://gitlab.xx.com/g/lanxum-amisp · commit 1a2b3c/4d5e6f）`），来源为运行时 `git remote get-url origin`（ssh 自动转网页链接）+ `git branch --show-current`
+- 需求概述末行溯源括号必带 **GitLab 网页链接 + 分支 + commit id + 提交日期**（如 `（2次提交 09-05 13:42~13:52 · 分支 master · GitLab：https://gitlab.xx.com/g/lanxum-amisp · commit 1a2b3c/4d5e6f）`），来源为运行时 `git remote get-url origin`（ssh 自动转网页链接）+ `git branch --show-current` + `git log %ai` 日期
 - 备注含文件数、行数变化、实际耗时窗口
 
 ## 工时关系
