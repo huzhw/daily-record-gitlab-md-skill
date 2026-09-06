@@ -1,3 +1,5 @@
 .idea/
 
 .code-check.db
+
+__pycache__/
