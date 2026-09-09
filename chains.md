@@ -8,7 +8,7 @@
 
 ## 卡 1：中信底稿V5
 
-- 仓库：`workingpaper-v5.5` / `standard_thdg_zxdm` ｜ 中文名：中信底稿v5 / 中信底稿V5
+- 仓库：`workingpaper-v5.5` / `standard_thdg_zxdm` ｜ 曾用中文名（旧版日报参考）：中信底稿v5 / 中信底稿V5
 - 技术栈：Java 8 + Spring MVC + MyBatis + 旧 JSP + React（wpcms-react）+ 达梦/MySQL
 - 依据：2026-09-05 ~ 09-08 日报实证
 
@@ -38,7 +38,7 @@
 
 ## 卡 2：智能数据底座（ragflow精简）
 
-- 仓库：`ai_data_infra` ｜ 中文名：智能数据底座（ragflow精简）
+- 仓库：`ai_data_infra` ｜ 曾用中文名（旧版日报参考）：智能数据底座（ragflow精简）
 - 技术栈：Python（ragflow 精简）+ 容器化发版
 - 依据：2026-09-09 日报实证
 
@@ -63,7 +63,7 @@
 
 ## 卡 3：档案V6
 
-- 仓库：`lanxum-amisp` / `lanxum-amisp-java` / `lanxum-amisp-react` ｜ 中文名：档案V6
+- 仓库：`lanxum-amisp` / `lanxum-amisp-java` / `lanxum-amisp-react` ｜ 曾用中文名（旧版日报参考）：档案V6
 - 技术栈：Java + React + JSP（三仓联动）
 - 依据：**待实证**（近期日报无记录）
 
@@ -79,7 +79,7 @@
 
 ## 卡 4：intelliauditflow（+web）
 
-- 仓库：`intelliauditflow` / `intelliauditflow-web` ｜ 中文名：暂用原名（映射表外）
+- 仓库：`intelliauditflow` / `intelliauditflow-web` ｜ 曾用中文名：无（仓库列直用原名）
 - 技术栈：Java（原生 SqlSessionFactoryBean，非 MyBatis-Plus 全家桶配置）+ 达梦 + React（antd 5.5.0）
 - 依据：2026-09-06 日报实证
 
@@ -101,7 +101,7 @@
 
 ## 卡 5：日报面板
 
-- 仓库：`daily-report-panel` ｜ 中文名：日报面板
+- 仓库：`daily-report-panel` ｜ 曾用中文名（旧版日报参考）：日报面板
 - 技术栈：Node 22 + Fastify 5（ESM）+ Vue 3 + Naive UI + MySQL（daily_panel@13306）+ Tauri 桌面壳
 - 依据：daily-report-panel 项目 AGENTS.md 规则
 
@@ -123,7 +123,7 @@
 
 ---
 
-## 卡 6：通用兜底（映射表外仓库）
+## 卡 6：通用兜底（无对应卡的仓库）
 
 - 依据：无——**首记后必须提案转正式卡**
 

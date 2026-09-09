@@ -58,7 +58,7 @@
 |------|------|------|---------|---------|------|-------------|---------------|------|--------|
 
 - 状态：`100%`（已完成）、`50%`（进行中）、`0%`（未开始）
-- 仓库名自动映射为中文简称（如 `ai_data_infra` → 智能数据底座）
+- 仓库列直写 git 仓库原名（如 `ai_data_infra`）；中文项目名由日报管家合并时按 repo_map 映射，本 skill 不做映射
 - 需求概述末行溯源括号必带 **GitLab 网页链接 + 分支 + commit id + 提交日期**（如 `（2次提交 09-05 13:42~13:52 · 分支 master · GitLab：https://gitlab.xx.com/g/lanxum-amisp · commit 1a2b3c/4d5e6f）`），来源为运行时 `git remote get-url origin`（ssh 自动转网页链接）+ `git branch --show-current` + `git log %ai` 日期
 - 提交id 列（第 10 列，必填）：本条需求全部 commit 短 id，`/` 分隔，跨分支带 `(分支名)` 后缀，无提交填`无`；供 `recorded_commits.py` 增量判重，日报管家解析只取前 9 列、不受影响
 - 备注含文件数、行数变化、实际耗时窗口
