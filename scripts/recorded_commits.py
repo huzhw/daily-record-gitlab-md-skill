@@ -47,6 +47,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from report_dir import resolve_report_dir  # noqa: E402
 
 RE_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+RE_TABLE_HEADER = re.compile(r"^\|\s*序号\s*\|")  # 表头识别用正则，防空格/列宽变化（2026-09-10）
 RE_ID = re.compile(r"^[0-9a-fA-F]{6,40}$")  # 真实 %h ≥7 位；6 位兼容 SKILL.md 示例格式
 RE_ID_TOKEN = re.compile(r"^([0-9a-fA-F]{6,40})(?:\(([^)]*)\))?$")  # 1a2b3c(master) → 1a2b3c
 NO_COMMIT_WORDS = {"无", "-", "—", "/"}
@@ -75,12 +76,12 @@ def parse_md_table(md_path):
     in_table = False
     for raw in lines:
         line = raw.strip()
-        if line.startswith("| 序号"):
+        if RE_TABLE_HEADER.match(line):
             in_table = True
             continue
         if not in_table:
             continue
-        if line.startswith("|--") or line.startswith("| ---"):
+        if not set(line) - set("|-: \t"):  # 分隔行（|---|---|），正则容错空格与列宽
             continue
         if not line.startswith("|"):
             if not line:
