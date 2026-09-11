@@ -77,16 +77,29 @@
 ## 卡 3：档案V6
 
 - 仓库：`lanxum-amisp` / `lanxum-amisp-java` / `lanxum-amisp-react` ｜ 曾用中文名（旧版日报参考）：档案V6
-- 技术栈：Java + React + JSP（三仓联动）
-- 依据：**待实证**（近期日报无记录）
+- 技术栈：Java + React（三仓联动）
+- 依据：2026-09-11 日报实证
 
-**数量口径**：暂按卡 6 通用兜底口径，首次记录后按实证回填并走提案确认
+**数量口径**
 
-**标准触点清单**（暂定骨架）：Java 后端链路 / React 页面 / JSP 接入 / 权限白名单
+- 新增代码一项 = 一个新类（ServiceImpl/Vo/Config）/ 一处配置化开关逻辑块（如 JinGeUtils 签章分支）/ 一组 VO 字段
+- 差异修改一处 = 一个需单独判断的改动点（SQL 方言分支、兼容取值判断）
+- 多 profile yml 同模式改动按「机械替换」数处数，不按文件数
 
-**测试验证典型项**：按卡 6 通用兜底
+**标准触点清单**（逐项过，没碰不计）
 
-**已知坑**：待积累
+- 后端：Controller → ServiceImpl（customerLjzxt 等客户化包）→ Mapper/XML
+- 独立服务：conver-pdf 等的 Utils/Config/@Value 注入 + 多 profile yml
+- 模型层：amisp-sub/lanxum-amisp-model VO 字段追加
+- 分支：master 与 master_中海信创 双分支，改动经 merge/cherry-pick 同步——代码内容只在 master 行计价，同步操作单独记行
+
+**测试验证典型项**：接口回归 5min/个；方言 SQL 排序/结果核对 3min/类；第三方通道（签章等）按 local/remote 路径分别回归 5min/个
+
+**已知坑**
+
+- 同一远端仓库（lanxum-amisp）两个本地工作区切不同分支（master / master_中海信创），`today_commits.py` 两边都会列出共享提交对象——cherry-pick/merge 的重复改动只计一次，防双计
+- 两克隆短 id 长度可能不同（10 位/9 位），`recorded_commits.py` 前缀双向匹配可互认，判重安全
+- 编号排序清洗需三层 replace：半角空格 + 全角空格(U+3000) + 点号；方言分支 Oracle/达梦 `to_number`、MySQL `cast unsigned`（2026-09-11）
 
 ---
 
