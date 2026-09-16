@@ -5,7 +5,9 @@
 背景：
     同一天多次「补充日报」时，必须只记录还没写进 md 的 commit。
     以前靠 AI 肉眼比对溯源括号，容易重复/漏记；本脚本把判断机械化：
-    事实源就是 md 表格末列「提交id」（日报管家解析只取前 9 列，此列不进库、不影响管家）。
+    事实源就是 md 表格「提交id」列——🔴 按表头列名定位（2026-09-16 起，列序漂移免疫；
+    表头无此列则全部行进 rows_without_ids、不静默误判，需先按 SKILL 第 6 步补表头）。
+    （日报管家解析只取前 9 列，此列不进库、不影响管家。）
 
 用法：
     python recorded_commits.py                                  # 今天：仅输出已记录清单
@@ -26,10 +28,10 @@
 仓库不同也不会误判。长短 id 前缀互匹配（≥4 位）。
 
 输出（JSON，stdout；提取字段用 jq，禁止 python -c 二次处理）：
-    date / md / md_exists
+    date / md / md_exists / id_column（提交id 列 0 基下标，-1 = 表头无此列）
     recorded           [{seq, repo, ids}]     已记录清单（按行分组）
     non_commit_rows    [{seq, repo}]          提交id 列填「无」的行（正常，如纯数据运维）
-    rows_without_ids   [{seq, repo, reason}]  拿不到 id 的行（历史9列 / 列为空 / 解析失败）
+    rows_without_ids   [{seq, repo, reason}]  拿不到 id 的行（历史9列 / 表头缺列 / 列为空 / 解析失败）
                                               → 去重对此类行失效，需人工核对后再记录
     repo_not_found_in_md  bool                传入仓库名与 md 任何行都不匹配（防传错名导致全判未记录）
     given / unrecorded / all_recorded
@@ -62,22 +64,28 @@ def id_match(given, recorded):
 
 
 def parse_md_table(md_path):
-    """解析日报 md 表格，返回 (rows, md_exists)。
+    """解析日报 md 表格，返回 (rows, md_exists, id_col)。
 
     rows: [{seq, repo, ids, reason}]  reason=None 正常；否则是拿不到 id 的原因；
           ids=[] 且 reason='无commit' 表示提交id 列填「无」的正常行。
+    id_col: 「提交id」列 0 基下标（按表头列名定位）；-1 = 表头无此列。
     """
     if not os.path.isfile(md_path):
-        return [], False
+        return [], False, -1
     with open(md_path, "r", encoding="utf-8-sig") as f:
         lines = f.read().split("\n")
 
     rows = []
     in_table = False
+    id_col = -1  # 「提交id」列按表头列名定位；-1 = 表头无此列
     for raw in lines:
         line = raw.strip()
         if RE_TABLE_HEADER.match(line):
             in_table = True
+            # 🔴 提交id 列按表头列名定位（2026-09-16 起）：列序漂移免疫；
+            #    表头无此列 → 全部行进 rows_without_ids，不静默误判
+            header_cells = [c.strip() for c in line.split("|")[1:-1]]
+            id_col = header_cells.index("提交id") if "提交id" in header_cells else -1
             continue
         if not in_table:
             continue
@@ -98,11 +106,16 @@ def parse_md_table(md_path):
         if not repo and not desc and not any(cells[4:]):
             continue
 
-        if len(cells) < 10:
-            rows.append({"seq": seq, "repo": repo, "ids": [], "reason": "历史9列，无提交id列"})
+        if id_col < 0:
+            rows.append({"seq": seq, "repo": repo, "ids": [],
+                         "reason": "表头无「提交id」列"})
+            continue
+        if len(cells) <= id_col:
+            rows.append({"seq": seq, "repo": repo, "ids": [],
+                         "reason": f"行列数不足，取不到提交id 列（第{id_col + 1}列）"})
             continue
 
-        id_cell = cells[9]
+        id_cell = cells[id_col]
         if not id_cell:
             rows.append({"seq": seq, "repo": repo, "ids": [], "reason": "提交id列为空（疑似忘填）"})
             continue
@@ -123,7 +136,7 @@ def parse_md_table(md_path):
                          "reason": "提交id列含无法解析的标记: " + ",".join(bad)})
         else:
             rows.append({"seq": seq, "repo": repo, "ids": ids, "reason": None})
-    return rows, True
+    return rows, True, id_col
 
 
 def main():
@@ -164,7 +177,7 @@ def main():
     md_path = args.md or os.path.join(
         resolve_report_dir(day), f"日报需求记录-{day.strftime('%Y-%m-%d')}.md"
     )
-    rows, md_exists = parse_md_table(md_path)
+    rows, md_exists, id_col = parse_md_table(md_path)
 
     # 日报管家的生命周期：抓取后把当天 md 移入 已合并\YYYY-MM-DD-NN.md 分片。
     # 当天 md 已不存在时，把当天分片也解析进来——「合并后同天再补记」同样能去重。
@@ -174,7 +187,7 @@ def main():
         prefix = day.strftime("%Y-%m-%d") + "-"
         pattern = os.path.join(merged_dir, prefix + "*.md")
         for shard in sorted(glob.glob(pattern)):
-            shard_rows, ok = parse_md_table(shard)
+            shard_rows, ok, _shard_id_col = parse_md_table(shard)
             if ok:
                 merged_shards.append(os.path.basename(shard))
                 rows.extend(shard_rows)
@@ -218,6 +231,7 @@ def main():
         "date": day.strftime("%Y-%m-%d"),
         "md": md_path,
         "md_exists": md_exists,
+        "id_column": id_col,
         "merged_shards": merged_shards,
         "recorded": recorded,
         "non_commit_rows": non_commit,
