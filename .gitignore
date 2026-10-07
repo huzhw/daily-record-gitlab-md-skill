@@ -3,3 +3,5 @@
 .code-check.db
 
 __pycache__/
+
+.codegraph/
