@@ -19,11 +19,13 @@ from datetime import date, datetime
 DESKTOP = r"F:\idea-workspase-skills\daily-report-panel"  # 日报根目录（2026-09-04 迁移自桌面，变量名沿用免改引用）
 
 
-def resolve_report_dir(day):
-    """返回 day 对应的报告月目录；规范目录不存在时创建「08月」格式。
+def resolve_report_dir(day, create=True):
+    """返回 day 对应的报告月目录；create=True 且规范目录不存在时创建「08月」格式。
 
     Args:
         day: datetime.date 对象
+        create: 是否允许创建目录。只读场景（如增量去重扫描）传 False：只返回规范路径，
+                不凭空建空月目录，调用方自己判 os.path.isdir
 
     Returns:
         报告月目录的绝对路径
@@ -41,9 +43,10 @@ def resolve_report_dir(day):
         return path_mm
     if os.path.isdir(path_m):
         return path_m
-    # 都不存在 → 创建规范格式目录
-    os.makedirs(path_mm, exist_ok=True)
-    print(f"[提示] 目录不存在，已创建规范目录：{path_mm}", file=sys.stderr)
+    # 都不存在 → create=True 时创建规范格式目录；create=False 只返回规范路径（只读场景不落盘）
+    if create:
+        os.makedirs(path_mm, exist_ok=True)
+        print(f"[提示] 目录不存在，已创建规范目录：{path_mm}", file=sys.stderr)
     return path_mm
 
 

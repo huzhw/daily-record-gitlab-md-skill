@@ -98,15 +98,15 @@ def resolve_remote(cwd):
     return "", ""
 
 
-def collect_commits(day, cwd, author):
-    """取 day 当天本人提交（按作者日期精确筛选），附逐 commit numstat 聚合。
+def collect_commits_range(start_day, end_day, cwd, author):
+    """取 [start_day, end_day] 内本人提交（按作者日期精确筛选、含两端），附逐 commit numstat 聚合。
 
     git 侧 --since/--until 是宽窗口预过滤（按 commit 日期），最终以 %ai 作者日期精确比对，
-    保证展示日期与筛选口径一致。
+    保证展示日期与筛选口径一致。单日调用 = start_day == end_day。
     """
     fmt = "--format=%x00%h%x00%ai%x00%s"
-    since = f"{(day - timedelta(days=1)).isoformat()} 00:00:00"
-    until = f"{(day + timedelta(days=1)).isoformat()} 23:59:59"
+    since = f"{(start_day - timedelta(days=1)).isoformat()} 00:00:00"
+    until = f"{(end_day + timedelta(days=1)).isoformat()} 23:59:59"
     raw = git_out(["log", fmt, f"--author={author}", f"--since={since}", f"--until={until}",
                    "--numstat"], cwd)
 
@@ -119,7 +119,7 @@ def collect_commits(day, cwd, author):
                 dt = datetime.strptime(ai, "%Y-%m-%d %H:%M:%S %z")
             except ValueError:
                 continue
-            if dt.date() == day:  # 作者日期精确筛选
+            if start_day <= dt.date() <= end_day:  # 作者日期精确筛选（含两端）
                 cur = {"id": cid, "datetime": ai, "time": ai[11:16], "subject": subject,
                        "files": 0, "insertions": 0, "deletions": 0, "_fset": set()}
                 commits.append(cur)
@@ -140,6 +140,11 @@ def collect_commits(day, cwd, author):
         c["files"] = len(c.pop("_fset"))
     commits.sort(key=lambda c: c["datetime"])
     return commits, files, ins, dele
+
+
+def collect_commits(day, cwd, author):
+    """取 day 当天本人提交（区间版的特例；保持原调用方签名与输出不变）。"""
+    return collect_commits_range(day, day, cwd, author)
 
 
 def main():
