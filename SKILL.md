@@ -30,14 +30,18 @@ incremental_commits.py 增量汇总（窗口内本人提交 − md 已记录） 
 
 ---
 
-## 多项目：在哪个仓库跑就记录哪个
+## 多项目：默认四仓一次扫完，不用来回切目录
 
 每天常有多个项目要填日报，**每个项目一条流程，各记各的 md 行**（跨天漏记也一样）：
 
-1. 进入该项目 git 仓库目录（或在其工作目录下调用）
-2. 对该仓库执行：`incremental_commits.py`（回看 7 天差集）→ 合并任务 → 判三类 → 评估 → **写入今天日期 md 的那个仓库行**（补记行日期列写真实提交日）
+1. 一次跑 `incremental_commits.py`（不带参数）——内置默认仓库清单（`scripts/repos.py`，当前四仓：zxdm、zxdm-react、amisp-java、amisp-react），**任意目录下执行都全部扫完**，不用逐仓 cd 切目录
+2. 按 JSON 的 `repos_with_unrecorded` 逐仓走：合并任务 → 判三类 → 评估 → **写入今天日期 md 的那个仓库行**（补记行日期列写真实提交日）；`status=ok 且 unrecorded_count=0` 的仓库直接跳过，某仓 `status=error`（路径漂了/不是 git 仓库）报告错误并提示改 `scripts/repos.py` 清单，其余仓库照常
 3. 今天日期的 md：`日报需求记录-{今天}.md`，各项目共用同一个文件，**追加**（Append）不覆盖、不重建；之前那份已被管家抓走就新建一份（同一天多份属正常，管家按 `已合并\` 分片合并）
 4. 当天所有项目都记完即收工
+
+> 🔴 **清单外仓库**：不在默认清单的仓库两种方式——`--repo <别名|目录名|完整路径>` 单扫指定仓（清单外路径也认）；或在那个仓库目录下用 `--cwd`（行为同旧版单仓模式）。
+>
+> 🔴 **加常跑仓库**：改 `scripts/repos.py` 的 DEFAULT_REPOS（一行一仓只存本地路径；仓库真名运行时按 remote URL 末段现取，清单里不维护名字）。
 
 > 🔴 **无 commit 的运维/实施工作也要记**（服务器装库、部署、配置对齐、启停、发版、备份）：提交id 列写 `无`，按「运维/实施类记录口径」两列记实测——不许因为「没有提交」就漏记，也不许拿代码单价表硬算。
 >
@@ -115,32 +119,39 @@ python "{技能目录}/scripts/report_dir.py" 2026-08-03   # 指定某天（兜�
 
 ### 第 1 步：汇总未记录的增量提交 🔴 一个脚本出全量，禁止手工拼命令
 
-🔴 **只统计自己的提交、只取还没记进 md 的**：`incremental_commits.py` 内置 `--author="胡志伟"` 过滤（身份以 `git log --format="%an <%ae>"` 输出的 `胡志伟 <huzhiwei@lanxum.com>` 为准），并自动扫 md 建「已记录集合」做差集。在目标仓库目录下运行：
+🔴 **只统计自己的提交、只取还没记进 md 的**：`incremental_commits.py` 内置 `--author="胡志伟"` 过滤（身份以 `git log --format="%an <%ae>"` 输出的 `胡志伟 <huzhiwei@lanxum.com>` 为准），并自动扫 md 建「已记录集合」做差集。**默认一次扫全部默认仓库**（清单见 `scripts/repos.py`）：
 
 ```bash
-python "{技能目录}/scripts/incremental_commits.py"              # 回看 7 天（含今天）
-python "{技能目录}/scripts/incremental_commits.py" --days 14    # 漏记超过一周时扩大回看
-python "{技能目录}/scripts/incremental_commits.py" --author 张三 # 换作者
+python "{技能目录}/scripts/incremental_commits.py"                  # 默认四仓全扫（清单见 scripts/repos.py）
+python "{技能目录}/scripts/incremental_commits.py" --days 14        # 漏记超过一周时扩大回看
+python "{技能目录}/scripts/incremental_commits.py" --author 张三    # 换作者
+python "{技能目录}/scripts/incremental_commits.py" --repo amisp-java # 只扫指定仓（别名/目录名/完整路径都认）
+python "{技能目录}/scripts/incremental_commits.py" --cwd            # 旧单仓模式：在哪个仓库目录跑就扫哪个
 ```
 
-脚本做的事（机械，不靠 AI 比对）：取回看窗口内本人全部提交 → 扫描窗口覆盖月份下**全部 live md + `已合并\` 分片** → 按「仓库 + 提交id」算差集。一次输出 JSON（提取字段用 `jq`，禁止 `python -c` 二次处理）：`unrecorded`（**每个**未记录提交的短 id / 真实日期 / 时间 / 主题 / 文件数 / ±行数）、`unrecorded_by_date`（按提交日期分组）、`already_recorded`（窗口内但 md 已记录的=「已跳过」清单）、`candidate_count` / `unrecorded_count`、`md_files_scanned` / `md_repos`、时间窗、分支、origin 与规整后的 GitLab 网页链接。**列出全部未记录提交，禁止 `-n` 截断。**
+多仓模式输出外层 `{mode, date, lookback_days, window, author, total_unrecorded, repos_with_unrecorded, repos[]}`；`repos[]` 每仓一份单仓 JSON（字段同下，外带 `alias/path/status`），`status=error` 的仓不炸整批。**有增量的仓逐仓走合并/评估/写入，没增量的仓跳过**。
 
-- `no_unrecorded=true` → 直接回复「该仓库没有未记录的提交（回看 {N} 天内 {M} 次提交都已记录）」收工——不创建、不修改 md，不凭会议记录或记忆编造需求行
+脚本做的事（机械，不靠 AI 比对）：取回看窗口内本人全部提交 → 扫描窗口覆盖月份下**全部 live md + `已合并\` 分片**（多仓共享同一份已记录集合）→ 按「仓库 + 提交id」算差集。一次输出 JSON（提取字段用 `jq`，禁止 `python -c` 二次处理）：`unrecorded`（**每个**未记录提交的短 id / 真实日期 / 时间 / 主题 / 文件数 / ±行数）、`unrecorded_by_date`（按提交日期分组）、`already_recorded`（窗口内但 md 已记录的=「已跳过」清单）、`candidate_count` / `unrecorded_count`、`md_files_scanned` / `md_repos`、时间窗、分支、origin 与规整后的 GitLab 网页链接。**列出全部未记录提交，禁止 `-n` 截断。**
+
+- `no_unrecorded=true`（或 `repos_with_unrecorded` 为空）→ 直接回复「没有未记录的提交（回看 {N} 天内 {M} 次提交都已记录）」收工——不创建、不修改 md，不凭会议记录或记忆编造需求行
 - `web_url_resolved=false` → 溯源括号里整段贴 origin 原文，不猜、不硬编码 host
 - `repo_not_found_in_md=true` → 仓库名与 md 已有写法不匹配（**首次记录该仓库也会命中**）：先核对 remote 末段与 md 仓库列写法（见「仓库列口径」），确认无误再继续；同名异写（如 中信底稿V5 / workingpaper-v5.5）会让差集把已记录的全判成未记录
 - `rows_without_ids` 非空 → 有行拿不到提交id（历史 9 列格式 / 表头缺列 / 忘填 / 解析失败），去重对那批 commit 失效，**向用户说明并人工核对后再决定是否记录**
 - **提交日期口径**：补记提交用 JSON 里每个 commit 的真实 `YYYY-MM-DD`（展示与 md 日期列用 `MM-DD`）；**文件名/落盘文件用今天**
 - **兜底**：`incremental_commits.py` 不可用时才手工拼 `git log --author=... --since=... --until=... --numstat`，差集仍必须走 `recorded_commits.py`；仅当用户**明确只补某一天**时才用 `today_commits.py 2026-09-05`（只取那天，不跨天、不做差集）
 
-汇总展示格式（数值全部取自 JSON，不另跑命令）：
+汇总展示格式（数值全部取自 JSON，不另跑命令；多仓逐仓一节，只列有增量的仓）：
 ```
-本次增量共 N 次未记录提交（回看 7 天：10-13~10-19，窗口内本人提交 M 次，涉及 K 个文件）
-仓库链接：https://gitlab.xx.com/g/work-v5.5（分支 master）
-未记录 commit：1a2b3c（10-15 14:20）/4d5e6f（10-19 19:16）
-已跳过（已记录）：1a2b3d（10-13 15:45）… / 无
+本次增量共 N 次未记录提交（回看 7 天：10-14~10-20，涉及 K 个仓库）
+▸ workingpaper-v5.5（zxdm，分支 master）：M 次未记录，涉及 X 个文件
+  仓库链接：https://gitlab.xx.com/huzhiwei/workingpaper-v5.5
+  未记录 commit：1a2b3c（10-15 14:20）/4d5e6f（10-19 19:16）
+  已跳过（已记录）：1a2b3d（10-13 15:45）… / 无
+▸ workingpaper-react-v5.5（zxdm-react，分支 master）：…
+（unrecorded_count=0 的仓库不列；status=error 的仓单独一句报错并提示改 scripts/repos.py）
 ```
 
-🔴 **脚本失败时才手工兜底**（同样只读自己的提交）：
+🔴 **脚本失败时才手工兜底**（同样只读自己的提交；多仓模式下只兜出错的那个仓，其余仓照常走流程）：
 ```bash
 git log --author="胡志伟" --since="YYYY-MM-DD 00:00:00" --until="YYYY-MM-DD 23:59:59" --format="%h %ai %s" --numstat
 git remote get-url origin

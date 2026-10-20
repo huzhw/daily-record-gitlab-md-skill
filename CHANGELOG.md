@@ -7,6 +7,12 @@
 
 ## 流程口径变更（与计价表版本号脱钩）
 
+### 2026-10-20：采集支持默认多仓库，免逐仓切目录
+
+- 新增 `scripts/repos.py`：默认仓库清单（一行一仓只存本地路径；仓库真名运行时按 remote URL 末段现取，清单不维护名字防漂移）。当前四仓：zxdm（standard_thdg_zxdm）、zxdm-react（standard_thdg_zxdm_react）、amisp-java（lanxum-amisp-java）、amisp-react（lanxum-amisp-react）
+- `incremental_commits.py` 重构：**默认（无参数）一次扫全部默认仓**，输出外层 `{mode, date, lookback_days, window, author, total_unrecorded, repos_with_unrecorded, repos[]}`，`repos[]` 每仓一份旧版单仓 JSON 外带 `alias/path/status`；单仓失败（目录漂了/不是 git 仓库/无可用远端）`status=error` 不炸整批；多仓共享同一份「已记录集合」（md 解析按窗口缓存，只解析一次）；`--repo <别名|目录名|完整路径>` 单扫指定仓（清单外路径也认）；`--cwd` 保留旧单仓行为
+- 起因：架构师「默认几个仓库吧，要不我还得来回切」（2026-10-20）；**计价表版本不变（仍 v2.4）**，评估与写入口径不动，只改采集入口
+
 ### 2026-10-19：采集改为「提交增量」，产出固定写今天日期文件
 
 - 第 1 步原 `today_commits.py`（只取当天）+ 第 1.5 步差集，合并为新增 `scripts/incremental_commits.py`：回看窗口（默认 7 天，`--days` 可调）内本人全部提交 − md 已记录集合（扫窗口覆盖月份 live md + `已合并\` 分片）→ 未记录增量；跨天漏记自动补上，不再要求按天补跑

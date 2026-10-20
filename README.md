@@ -7,7 +7,7 @@
 
 ## 核心能力（速览）
 
-- **增量汇总（跨天补记）** — `incremental_commits.py` 一键汇总最近 7 天内**本人、且还没记进 md** 的提交：内置 `--author="胡志伟"` 过滤（可覆盖），自动扫窗口月份全部 live md + 日报管家 `已合并\` 分片建已记录集合做差集，输出未记录清单 / 已跳过清单 / 文件数 / ±行数（逐 commit numstat 求和）/ 时间窗 / 分支 / GitLab 网页链接 JSON；远端名兜底（origin→gitlab→upstream→唯一远端）、URL 凭据自动剥离；`today_commits.py` 保留作「明确只补某一天」兜底
+- **增量汇总（跨天补记 · 默认多仓库）** — `incremental_commits.py` 默认一次扫 `scripts/repos.py` 清单里的全部常跑仓库（当前四仓，不用逐仓切目录），汇总最近 7 天内**本人、且还没记进 md** 的提交：内置 `--author="胡志伟"` 过滤（可覆盖），自动扫窗口月份全部 live md + 日报管家 `已合并\` 分片建已记录集合做差集（多仓共享一份），输出未记录清单 / 已跳过清单 / 文件数 / ±行数（逐 commit numstat 求和）/ 时间窗 / 分支 / GitLab 网页链接 JSON；单仓失败不炸整批；`--repo <别名|路径>` 单扫指定仓（清单外也认）、`--cwd` 保留旧单仓模式；远端名兜底（origin→gitlab→upstream→唯一远端）、URL 凭据自动剥离；`today_commits.py` 保留作「明确只补某一天」兜底
 - **写后自检** — `recorded_commits.py` 按「仓库 + 提交id」二元组机械比对（提交id 列按**表头列名**定位，缺列报错），验证写入后 `unrecorded` 为空；传 id 必传仓库名——宁重复、勿漏记
 - **智能合并** — 同文件 / 同模块 / 同功能的 commit 合并为一条需求；行内子项按业务链路簇切分、非锚定子项 ×0.6（v1.5 机械规则）
 - **机械计价** — 先判三类（开发 / 文档 / 运维实施）；开发类双轴分型（轴 1 类 A~F 定人工数法、轴 2 档①~⑥定压缩比 K）+ 五维单价表固定单价机械相乘，C 类按「接口 / 表」一级锚点计数（v2.1），AI 只数数量不选值
@@ -32,6 +32,8 @@
 - [daily-merge-gitlab-excel](https://github.com/huzhw/daily-merge-gitlab-excel-skill)：日报合并（手动兜底，已由日报管家接管，不推荐）
 - [daily-report-panel](https://github.com/huzhw/daily-report-panel)：日报管家（关联仓库，非 skill，自动合并/导出/发件）
 - [dev-env-upgrade](https://github.com/huzhw/dev-env-upgrade)：开发环境升级医生：版本体检/最新版查询/安全升级
+- [prd](https://github.com/huzhw/prd-skill)：PRD 生成器（一句话需求→结构化需求文档）
+- [ralph](https://github.com/huzhw/ralph-skill)：PRD 转 prd.json（Ralph 自主执行格式）
 
 ## 安装
 
