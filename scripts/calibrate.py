@@ -256,8 +256,10 @@ def k_samples(day_from, day_to, md_override):
             row_map = {(r["seq"], r["repo"]): r for r in doc["rows"]}
             for b in doc["blocks"]:
                 tier = (b["fields"].get("档") or "").strip()[:1]
-                if tier not in TIER_CHARS and tier != SCAN_TIER:
-                    continue  # 文档/运维类块无档位，天然排除；扫描梳理型单独纳入
+                if not tier or (tier not in TIER_CHARS and tier != SCAN_TIER):
+                    # 无档位（文档/运维类块）或不认识的档位一律不进样本：
+                    # 空串是任何字符串的子串，单靠 `tier not in TIER_CHARS` 挡不住空档位
+                    continue
                 _h, _ai, k = block_hours(b)
                 row = row_map.get((b["seq"], b["repo"]))
                 if k is None or row is None or row["actual"] is None or not row["human"]:
