@@ -51,6 +51,7 @@ RE_SHICE = re.compile(r"实测\s*([\d.]+)\s*h")  # 「人工=实测4.5h」「AI=
 RE_ACTUAL_COL = re.compile(r"约\s*([\d.]+)\s*h")            # 实测用时列「约 2h」
 RE_COMMENT = re.compile(r"<!--(.*?)-->", re.S)
 TIER_CHARS = "①②③④⑤⑥"
+SCAN_TIER = "扫"   # 「扫描梳理型 K=10.0」档（v2.5）在审计块「档=」字段里的首字，by_tier 按首字归类
 
 
 def parse_hours(text):
@@ -242,7 +243,11 @@ def check_deviations(day, md_override):
 
 
 def k_samples(day_from, day_to, md_override):
-    """K 样本：带「档=」的开发类块 × 行内「实测用时」→ 人工/实测 比值按档分布。"""
+    """K 样本：带「档=」的开发类块 × 行内「实测用时」→ 人工/实测 比值按档分布。
+
+    扫描梳理型（首字「扫」）同样纳入，但只收人工 ≥ 2h 的样本：小行的成本以
+    「开会话 / 验证 / 提交」这类固定动作占大头，人工÷实测 不反映该档 K。
+    """
     samples = []
     day = day_from
     while day <= day_to:
@@ -251,14 +256,17 @@ def k_samples(day_from, day_to, md_override):
             row_map = {(r["seq"], r["repo"]): r for r in doc["rows"]}
             for b in doc["blocks"]:
                 tier = (b["fields"].get("档") or "").strip()[:1]
-                if tier not in TIER_CHARS:
-                    continue  # 文档/运维类块无档位，天然排除
+                if tier not in TIER_CHARS and tier != SCAN_TIER:
+                    continue  # 文档/运维类块无档位，天然排除；扫描梳理型单独纳入
                 _h, _ai, k = block_hours(b)
                 row = row_map.get((b["seq"], b["repo"]))
                 if k is None or row is None or row["actual"] is None or not row["human"]:
                     continue
                 actual = float(row["actual"])
                 if actual <= 0:
+                    continue
+                if tier == SCAN_TIER and float(row["human"]) < 2.0:
+                    # 小行（<2h）固定动作占比过半，ratio 偏低不代表该档 K，不进样本
                     continue
                 samples.append({
                     "date": day.strftime("%Y-%m-%d"), "source": src,
