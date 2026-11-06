@@ -7,22 +7,24 @@
     取最近 N 天（默认 7 天，含今天＝「漏记最多一周」）内本人的提交，减去日报 md 里已记录的
     「仓库 + 提交id」，只把没记录过的写进**今天日期**的 md 文件，行日期列写真实提交日期。
 
-背景（2026-10-20 多仓库）：
-    默认不再按「当前目录」定仓库，而是扫 scripts/repos.py 登记的默认仓库清单
-    （架构师常用四仓），一次输出全部仓库的增量；单仓库用 --repo 别名/路径，
-    旧行为（按当前目录）保留在 --cwd 作清单外兜底。
+背景（多仓库级联）：
+    仓库清单在 scripts/repos.json（系统 → 分组 → 仓），不再按「当前目录」定单仓。
+    默认只扫锚点（当前目录）所在**那套系统**的全部仓：在底稿的仓里敲只扫底稿、
+    在档案的仓里敲只扫档案；跨系统用 --system 点名；锚点不属于任何登记系统时报错，
+    不静默扩大范围。单仓库仍可用 --repo 别名/路径；旧行为（按当前目录单仓）留在 --cwd 兜底。
 
 关键点：
     🔴 去重事实源 = 回看窗口覆盖的每个月份目录下**全部 live md** + `已合并/*.md` 分片。
        不能只看今天：补记前几天的提交时，已记录行多半在更早的日文件 / 已合并分片里。
     🔴 仓库名口径 = remote URL 末段去 .git（与 SKILL「仓库列口径」一致），不猜本地目录名。
     🔴 差集键 = 仓库 + 短 id 前缀互匹配（复用 recorded_commits.id_match，长短 id 都认）。
-    🔴 单仓 JSON 形状与 2026-10-19 版完全一致（只多 alias/path/status 三个字段）；
-       --repo / 默认 --all 模式在外面套一层 {mode,...,repos:[...]}，--cwd 模式单仓 JSON 原样。
+    🔴 单仓 JSON 形状与 2026-10-19 版完全一致（只多 alias/path/status/system 字段）；
+       --repo / 默认级联模式在外面套一层 {mode,system,...,repos:[...]}，--cwd 模式单仓 JSON 原样。
     🔴 本脚本只读：不写 md、不建月目录（report_dir 以 create=False 调用）。
 
 用法：
-    python incremental_commits.py                    # 扫 repos.py 全部默认仓库（回看 7 天含今天）
+    python incremental_commits.py                    # 扫锚点所在那套系统的全部登记仓（回看 7 天含今天）
+    python incremental_commits.py --system 档案V6     # 点名系统：跨系统扫另一套（在底稿里也能扫档案）
     python incremental_commits.py --repo zxdm        # 只扫指定仓库（别名/目录名/完整路径都认）
     python incremental_commits.py --cwd              # 旧行为：按当前目录定仓库（清单外兜底）
     python incremental_commits.py --days 14          # 漏记超过一周时扩大回看
@@ -31,9 +33,9 @@
 
 输出（JSON，stdout；提取字段用 jq，禁止 python -c 二次处理）：
     --cwd 模式 = 单仓 JSON（同 2026-10-19 版形状）。
-    默认 / --all / --repo 模式 = {mode, date, lookback_days, window, author,
+    默认 / --system / --repo 模式 = {mode, system, date, lookback_days, window, author,
         total_unrecorded, repos_with_unrecorded, repos[]}；
-        每个单仓条目 = 2026-10-19 版字段 + {alias, path, status}：
+        每个单仓条目 = 2026-10-19 版字段 + {alias, path, status, system, group}：
         date / no_unrecorded / repo / repo_source / author
         lookback_days / window{since,until} / branch / remote_name / origin / web_url / web_url_resolved
         md_files_scanned / md_repos             回看月份扫到的 md（含已合并分片）与其中的仓库列取值
@@ -43,10 +45,10 @@
         unrecorded_count / unrecorded[] / unrecorded_ids[] / unrecorded_by_date{}
         already_recorded[]                      窗口内但 md 已记录的提交（「已跳过」清单，防漏用）
         commits 条目 = {id, datetime, time, date, mmdd, subject, files, insertions, deletions}
-        status="error" 的条目只有 {alias, path, status, error}（目录漂了/不是 git 仓库/无远端），不炸整批。
+        status="error" 的条目只有 {alias, path, system, group, status, error}（目录漂了/不是 git 仓库/无远端），不炸整批。
 
 退出码：0 正常（含 no_unrecorded / 个别仓库 error）；2 参数错误 / git 命令失败 /
---cwd 模式不在 git 仓库或无可用远端。
+--cwd 模式不在 git 仓库或无可用远端 / 锚点不属于任何登记系统。
 """
 import argparse
 import glob
@@ -60,7 +62,7 @@ from datetime import date, datetime, timedelta
 #   report_dir     → 月目录定位（create=False：只读、不建空月目录）
 #   today_commits  → 远端兜底 / 凭据剥离 / 网页链接规整 / 提交汇总（区间版 collect_commits_range）
 #   recorded_commits → md 表格解析（提交id 列按表头定位）/ 长短 id 前缀互匹配
-#   repos          → 默认仓库清单（2026-10-20 起 --all / --repo 的对象来源）
+#   repos          → 仓库级联清单（scripts/repos.json；默认级联 / --system / --repo 的对象来源）
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from report_dir import DESKTOP, resolve_report_dir  # noqa: E402
 from recorded_commits import id_match, parse_md_table  # noqa: E402
@@ -255,17 +257,20 @@ def main():
         pass  # Python < 3.7 无 reconfigure
 
     ap = argparse.ArgumentParser(
-        description="日报第 1 步：汇总「未记录」的本人提交（跨天增量，JSON；默认扫 repos.py 全部仓库）")
+        description="日报第 1 步：汇总「未记录」的本人提交（跨天增量，JSON；默认扫当前目录所在系统的全部登记仓）")
     ap.add_argument("--days", type=int, default=7,
                     help="回看天数（含今天，默认 7；对应「漏记最多一周」）")
     ap.add_argument("--author", default=os.environ.get("DAILY_REPORT_AUTHOR", DEFAULT_AUTHOR),
                     help=f"git 作者名过滤（默认 {DEFAULT_AUTHOR}）")
+    ap.add_argument("--system", metavar="系统名",
+                    help="点名要扫的系统（repos.json 的 projects[].project，如 档案V6）；"
+                         "默认 = 当前目录所在那套")
     ap.add_argument("--repo", metavar="别名|路径",
-                    help="只扫指定仓库（repos.py 别名 / 目录名 / 完整路径；清单外路径也认）")
+                    help="只扫指定仓库（仓目录名 / 中文名 / 完整路径；清单外路径也认）")
     ap.add_argument("--cwd", action="store_true",
-                    help="旧行为：按当前目录定仓库（单仓 JSON 原样输出，清单外兜底用）")
+                    help="旧行为：按当前目录定单仓（单仓 JSON 原样输出，清单外兜底用）")
     ap.add_argument("--all", action="store_true",
-                    help="扫全部默认仓库（默认即是，显式写更好读）")
+                    help="扫当前系统的全部登记仓（默认即是，显式写更好读）")
     ap.add_argument("--today", help="测试用：模拟今天（YYYY-MM-DD）")
     args = ap.parse_args()
 
@@ -277,6 +282,12 @@ def main():
         sys.exit(2)
     if args.cwd and args.all:
         print("--cwd 与 --all 二选一", file=sys.stderr)
+        sys.exit(2)
+    if args.cwd and args.system:
+        print("--cwd 与 --system 二选一（--cwd 只认当前目录那一个仓）", file=sys.stderr)
+        sys.exit(2)
+    if args.repo and args.system:
+        print("--repo 与 --system 二选一（--repo 指单仓、--system 指整套系统）", file=sys.stderr)
         sys.exit(2)
     today = date.today()
     if args.today:
@@ -298,23 +309,27 @@ def main():
         print(json.dumps(entry, ensure_ascii=False, indent=2))
         return
 
-    # ---- 默认 / --all / --repo：逐仓库扫描，外包一层汇总；单仓失败只标 error 不炸整批 ----
+    # ---- 默认 / --system / --repo：逐仓库扫描，外包一层汇总；单仓失败只标 error 不炸整批 ----
     try:
-        targets = resolve_repos(args.repo)
+        targets, scope = resolve_repos(args.repo, args.system, anchor=os.getcwd())
     except ValueError as e:
         print(str(e), file=sys.stderr)
         sys.exit(2)
 
     entries = []
-    for alias, path in targets:
+    for t in targets:
         try:
-            entries.append(scan_repo(alias, path, args, today, start))
+            entry = scan_repo(t["alias"], t["path"], args, today, start)
         except RepoError as e:
-            entries.append({"alias": alias, "path": path, "status": "error", "error": str(e)})
+            entry = {"alias": t["alias"], "path": t["path"], "status": "error", "error": str(e)}
+        entry["system"] = t.get("system") or ""
+        entry["group"] = t.get("group") or ""
+        entries.append(entry)
 
     total = sum(len(e.get("unrecorded", [])) for e in entries)
     print(json.dumps({
         "mode": "repo" if args.repo else "all",
+        "system": scope,
         "date": today.isoformat(),
         "lookback_days": args.days,
         "window": {"since": start.isoformat(), "until": today.isoformat()},
